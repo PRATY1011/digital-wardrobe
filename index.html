@@ -150,6 +150,15 @@ label.fl{display:block;font-size:10px;color:var(--mut);font-weight:800;text-tran
     <p class="subtle" style="text-align:center;font-size:11px;margin-top:14px">Everything stays on this phone. Up to 20 pieces in this trial.</p>
   </div>
 
+  <!-- TOUR -->
+  <div class="view" id="v-tour">
+    <div style="height:4dvh"></div>
+    <div id="tour-body"></div>
+    <div style="display:flex;gap:6px;justify-content:center;margin-top:22px" id="tour-dots"></div>
+    <button class="btn pine" style="margin-top:18px" id="tour-next"></button>
+    <button class="mut-link" onclick="endTour()">Skip the tour</button>
+  </div>
+
   <!-- CLOSET -->
   <div class="view" id="v-closet">
     <div class="topline">
@@ -161,10 +170,11 @@ label.fl{display:block;font-size:10px;color:var(--mut);font-weight:800;text-tran
     <div class="sec">Your pieces</div>
     <div class="chips" id="cl-chips"></div>
     <div class="grid" id="cl-grid"></div>
-    <div id="cl-empty" class="empty" style="display:none">
-      <div class="e1">Nothing here yet</div>
-      <div class="e2">Add your first piece — snap it, pick a photo,<br>or paste a store link.</div>
-      <button class="btn pine" style="max-width:220px;margin:18px auto 0" onclick="go('add')">Add a piece</button>
+    <div id="cl-empty" style="display:none">
+      <div class="sec" style="margin-top:6px">First steps</div>
+      <div id="cl-steps"></div>
+      <button class="btn pine" style="margin-top:14px" onclick="go('add')">Add my first piece</button>
+      <button class="mut-link" onclick="startTour()">Show me around again</button>
     </div>
   </div>
 
@@ -271,15 +281,21 @@ label.fl{display:block;font-size:10px;color:var(--mut);font-weight:800;text-tran
     <input type="text" id="pf-name" maxlength="20">
     <label class="fl">Usual size</label>
     <div class="sizes" id="pf-sizes"></div>
-    <div class="sec">Your fit · optional</div>
-    <p class="subtle" style="font-size:11.5px;margin-bottom:10px">Private, stored on this phone only. Pick a body type — or add exact measurements below if you want sharper fit checks like "this brand's M runs small".</p>
-    <label class="fl" style="margin-top:0">Measurements for</label>
+    <div class="sec">Fit details</div>
+    <button class="path" id="pf-fit-toggle" onclick="toggleFit()" style="margin-top:2px">
+      <span class="pic" style="background:var(--sand)"><svg class="psvg" viewBox="0 0 24 24" stroke="#5C564B"><path d="M4 12h16M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg></span>
+      <span><span class="tt">Add fit details</span><br><span class="dd">Optional — helps size checks when you shop. Private, this phone only.</span></span>
+      <span class="go" id="pf-fit-chev">›</span>
+    </button>
+    <div id="pf-fit" style="display:none">
+    <label class="fl">Sizing for</label>
     <div class="occs" id="pf-gender" style="margin-bottom:4px"></div>
-    <label class="fl">Body type — the quick way</label>
+    <label class="fl">Build — the quick way</label>
     <div class="occs" id="pf-body"></div>
     <label class="fl">Or exact measurements</label>
     <div class="sizes" id="pf-units" style="max-width:200px"></div>
     <div class="measure" id="pf-measure" style="margin-top:14px"></div>
+    </div>
     <button class="btn pine" style="margin-top:18px" onclick="saveProfile()">Save profile</button>
     <div class="sec">AI tagging</div>
     <p class="subtle" style="font-size:11.5px;margin-bottom:10px">Paste the trial API key you were given and every photo gets read by Claude — garment type, category, occasion and colour, auto-filled for you to confirm. The key is stored only on this phone.</p>
@@ -395,10 +411,54 @@ function finishOnboard(){
   profile = { name, size: obSize, gender:'Female', unit:'in', m:{} };
   localStorage.setItem('wd_profile', JSON.stringify(profile));
   $('nav').style.display='flex';
-  go('closet');
+  startTour();
 }
 
-/* ================= closet ================= */
+/* ================= guided tour ================= */
+const TOUR = [
+  { icon:'📸', t:'Get your clothes in', d:'Four ways, all under 30 seconds: <b>snap it</b> with your camera, <b>pick a photo</b> from your gallery, <b>scan the price tag</b> of something new, or <b>paste a store link</b> from Myntra or Ajio.' },
+  { icon:'✦', t:'Claude reads the photo', d:'The details fill themselves — garment type, category, occasion, colour. You just <b>check and fix</b> anything it got wrong, then save. Never type what a tap can do.' },
+  { icon:'👗', t:'Tap "Wore it today"', d:'Each wear you log makes the numbers honest — <b>cost-per-wear</b>, what\'s <b>asleep</b>, your true favourites. That\'s the whole habit: wear something, open the item, one tap.' }
+];
+let tourStep = 0;
+function startTour(){ tourStep = 0; renderTour(); go('tour'); }
+function renderTour(){
+  const s = TOUR[tourStep];
+  $('tour-body').innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:44px">${s.icon}</div>
+      <div style="font-family:var(--disp);font-size:24px;font-weight:600;margin-top:14px;letter-spacing:-.01em">${s.t}</div>
+      <p class="subtle" style="margin-top:10px;font-size:13.5px;padding:0 6px">${s.d}</p>
+    </div>`;
+  $('tour-dots').innerHTML = TOUR.map((_,i)=>`<span style="width:7px;height:7px;border-radius:50%;background:${i===tourStep?'var(--pine)':'var(--line)'}"></span>`).join('');
+  $('tour-next').textContent = tourStep<TOUR.length-1 ? 'Next' : 'Add my first piece';
+  $('tour-next').onclick = () => {
+    if(tourStep<TOUR.length-1){ tourStep++; renderTour(); }
+    else endTour(true);
+  };
+}
+function endTour(toAdd){
+  localStorage.setItem('wd_tour','1');
+  go(toAdd===true ? 'add' : 'closet');
+}
+function renderSteps(){
+  const hasProfile = !!(profile && (profile.body || Object.keys(profile.m||{}).length));
+  const hasItem = items.length>0;
+  const hasWear = items.some(i=>i.wears.length);
+  const steps = [
+    { done:true, t:'Create your profile', d:'Name and size — done' },
+    { done:hasItem, t:'Add your first piece', d:'Snap it, pick a photo, scan a tag or paste a link', v:'add' },
+    { done:hasWear, t:'Log your first wear', d:'Open any piece → "Wore it today"', v: hasItem?'closet':null }
+  ];
+  $('cl-steps').innerHTML = steps.map(s=>`
+    <div class="lrow" ${s.v&&!s.done?`data-v="${s.v}" style="cursor:pointer"`:'style="cursor:default"'}>
+      <div class="ic" style="width:24px;height:24px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;${s.done?'background:var(--pine-soft);color:var(--pine)':'background:var(--sand);color:var(--mut)'}">${s.done?'✓':'·'}</div>
+      <div><div class="nm" style="${s.done?'color:var(--mut);text-decoration:line-through':''}">${s.t}</div><div class="sm">${s.d}</div></div>
+      ${s.v&&!s.done?'<span class="rt">›</span>':''}
+    </div>`).join('');
+  $('cl-steps').querySelectorAll('[data-v]').forEach(el=>el.onclick=()=>go(el.dataset.v));
+}
+
 function renderCloset(){
   $('cl-name').textContent = profile.name;
   $('cl-count').textContent = items.length;
@@ -434,8 +494,11 @@ function renderCloset(){
     </div>`).join('');
   $('cl-grid').querySelectorAll('.tag').forEach(el=>el.onclick=()=>openDetail(el.dataset.id));
   $('cl-empty').style.display = items.length ? 'none':'block';
+  if(!items.length) renderSteps();
   $('cl-grid').style.display = items.length ? 'grid':'none';
 }
+
+/* ================= closet helpers end ================= */
 
 /* ================= add flow ================= */
 function renderAdd(){
@@ -778,6 +841,12 @@ const BODY_TYPES = {
   Female: ['Lean','Athletic','Curvy','Healthy'],
   Male:   ['Lean','Athletic','Dad bod','Healthy']
 };
+function toggleFit(force){
+  const el = $('pf-fit');
+  const show = force===true ? true : el.style.display==='none';
+  el.style.display = show ? 'block' : 'none';
+  $('pf-fit-chev').textContent = show ? '⌄' : '›';
+}
 function renderProfile(){
   $('pf-name').value = profile.name;
   renderSizeSel('pf-sizes', profile.size, s=>profile.size=s);
@@ -791,6 +860,9 @@ function renderProfile(){
   renderBodySel();
   renderUnitSel();
   renderMeasureFields();
+  const hasFit = !!(profile.body || Object.keys(profile.m).length);
+  $('pf-fit').style.display = hasFit ? 'block' : 'none';
+  $('pf-fit-chev').textContent = hasFit ? '⌄' : '›';
   $('pf-cap').textContent = `${items.length} / ${CAP}`;
 }
 function renderBodySel(){
