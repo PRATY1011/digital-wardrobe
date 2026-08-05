@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F3B2E">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Wardrobe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ivory:#FAF8F4; --paper:#FFF; --sand:#F0EBE2; --ink:#191712; --ink2:#5C564B; --mut:#9C958A;
+  --pine:#1F3B2E; --pine-soft:#E6EEE8; --pine-mid:#3E6B53;
+  --brass:#A9843C; --brass-soft:#F4EDDC; --line:#E7E1D6;
+  --disp:'Fraunces',Georgia,serif; --ui:'Manrope',-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:var(--ui);background:var(--ivory);color:var(--ink);-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
+#app{max-width:520px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+.view{flex:1;overflow-y:auto;padding:calc(14px + env(safe-area-inset-top)) 20px 100px;display:none}
+.view.on{display:block}
+h1.big{font-family:var(--disp);font-size:26px;font-weight:600;letter-spacing:-.02em}
+.subtle{font-size:13px;color:var(--ink2);font-weight:600;line-height:1.5;margin-top:5px}
+.sec{font-size:10.5px;color:var(--mut);margin:18px 0 9px;text-transform:uppercase;letter-spacing:.1em;font-weight:800}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:var(--ui);font-size:14px;font-weight:800;padding:15px;border-radius:14px;border:1.5px solid var(--ink);color:var(--ink);background:transparent;margin-top:10px;cursor:pointer}
+.btn.pri{background:var(--ink);color:#fff}
+.btn.pine{background:var(--pine);border-color:var(--pine);color:#fff}
+.btn:disabled{opacity:.4}
+.mut-link{display:block;width:100%;text-align:center;font-size:13px;color:var(--mut);margin-top:14px;font-weight:700;background:none;border:none;cursor:pointer}
+input[type=text],input[type=number],input[type=url],input[type=month]{width:100%;font-family:var(--ui);font-size:14px;font-weight:700;padding:13px 14px;border-radius:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);outline:none}
+input:focus{border-color:var(--pine-mid)}
+select{width:100%;font-family:var(--ui);font-size:14px;font-weight:700;padding:13px 14px;border-radius:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);outline:none;appearance:none}
+label.fl{display:block;font-size:10px;color:var(--mut);font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin:13px 0 6px}
+/* nav */
+#nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;display:flex;justify-content:space-around;align-items:center;border-top:1px solid var(--line);padding:10px 0 calc(12px + env(safe-area-inset-bottom));background:var(--ivory);z-index:20}
+#nav button{display:flex;flex-direction:column;align-items:center;gap:4px;font-family:var(--ui);font-size:10px;color:var(--mut);font-weight:800;background:none;border:none;letter-spacing:.02em}
+#nav button.on{color:var(--ink)}
+#nav button.on svg{stroke:var(--pine-mid)}
+#nav svg{stroke:currentColor}
+/* hero */
+.hero{background:var(--pine);color:var(--ivory);border-radius:18px;padding:18px;margin-top:14px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-34px;top:-34px;width:130px;height:130px;border-radius:50%;background:var(--brass);opacity:.18;filter:blur(10px)}
+.hero .k{font-family:var(--disp);font-size:34px;font-weight:500;letter-spacing:-.02em;line-height:1.05}
+.hero .k em{font-style:italic;color:#D8C08A}
+.hero .l{font-size:12.5px;color:#A9B8AD;margin-top:7px;font-weight:600}
+.hero .l b{color:var(--ivory)}
+.mini{display:flex;gap:10px;margin-top:12px}
+.mini>div{flex:1;background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:12px}
+.mini .k{font-family:var(--disp);font-size:17px;font-weight:600}
+.mini .l{font-size:9.5px;color:var(--mut);margin-top:3px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
+/* chips */
+.chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:8px 14px;border-radius:20px;background:var(--paper);color:var(--ink2);border:1px solid var(--line);cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip .cd{font-size:9.5px;opacity:.65}
+/* tag cards */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.tag{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 10px 12px;box-shadow:0 2px 6px rgba(25,23,18,.05);cursor:pointer}
+.tag::before{content:"";position:absolute;top:7px;left:50%;transform:translateX(-50%);width:8px;height:8px;border-radius:50%;background:var(--ivory);border:1.5px solid var(--line);z-index:2}
+.tag .art{height:130px;border-radius:9px;background:var(--sand);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tag .art img{width:100%;height:100%;object-fit:cover}
+.tag .nm{font-size:12.5px;font-weight:800;margin-top:9px;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag .meta{font-size:10.5px;color:var(--mut);margin-top:2px;font-weight:700}
+.badge{position:absolute;top:9px;right:9px;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.92);color:var(--brass);z-index:2}
+/* add paths */
+.path{display:flex;align-items:center;gap:13px;width:100%;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px 15px;margin-top:11px;cursor:pointer;text-align:left;font-family:var(--ui)}
+.path .pic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.path .tt{font-size:14px;font-weight:800;letter-spacing:-.01em;color:var(--ink)}
+.path .dd{font-size:11px;color:var(--mut);margin-top:2px;font-weight:700;line-height:1.4}
+.path .go{margin-left:auto;color:var(--mut);font-size:17px}
+.psvg{width:22px;height:22px;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+/* size selector */
+.sizes{display:flex;gap:7px}
+.sz{flex:1;text-align:center;font-family:var(--ui);font-size:12.5px;font-weight:800;padding:11px 0;border-radius:11px;border:1px solid var(--line);background:var(--paper);color:var(--ink2);cursor:pointer}
+.sz.on{background:var(--pine);border-color:var(--pine);color:#fff}
+/* occasion selector */
+.occs{display:flex;flex-wrap:wrap;gap:7px}
+.occ{font-family:var(--ui);font-size:12px;font-weight:800;padding:9px 14px;border-radius:20px;border:1px solid var(--line);background:var(--paper);color:var(--ink2);cursor:pointer}
+.occ.on{background:var(--pine);border-color:var(--pine);color:#fff}
+/* verify preview */
+.vprev{display:flex;gap:14px;align-items:center;margin-top:14px}
+.vprev .ph{width:92px;height:110px;border-radius:12px;background:var(--sand);overflow:hidden;flex:0 0 auto}
+.vprev .ph img{width:100%;height:100%;object-fit:cover}
+.ai-note{font-size:11.5px;color:var(--pine-mid);font-weight:800}
+/* bars */
+.bars{display:flex;align-items:flex-end;gap:8px;height:110px;margin-top:10px}
+.bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bar{width:100%;max-width:34px;background:var(--pine-mid);border-radius:7px 7px 3px 3px;min-height:3px}
+.bcol .bl{font-size:9px;color:var(--mut);font-weight:800;text-transform:uppercase}
+.bcol .bv{font-size:9.5px;color:var(--ink2);font-weight:800}
+.qrow{display:flex;gap:8px;margin-top:8px}
+.qrow>div{flex:1;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 11px}
+.qrow .qk{font-family:var(--disp);font-size:14px;font-weight:600}
+.qrow .ql{font-size:9px;color:var(--mut);font-weight:800;text-transform:uppercase;margin-top:2px}
+/* rows */
+.lrow{display:flex;align-items:center;gap:11px;background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:10px 12px;margin-top:8px}
+.lrow .th{width:40px;height:40px;border-radius:9px;background:var(--sand);overflow:hidden;flex:0 0 auto}
+.lrow .th img{width:100%;height:100%;object-fit:cover}
+.lrow .nm{font-size:12.5px;font-weight:800}
+.lrow .sm{font-size:10.5px;color:var(--mut);font-weight:700;margin-top:1px}
+.lrow .rt{margin-left:auto;font-size:12px;font-weight:800;color:var(--pine-mid);white-space:nowrap}
+/* detail */
+.dimg{height:280px;border-radius:16px;background:var(--sand);overflow:hidden;margin-top:12px;position:relative}
+.dimg img{width:100%;height:100%;object-fit:cover}
+.tl{display:flex;gap:5px;margin-top:8px}
+.tl i{flex:1;height:24px;border-radius:6px;background:var(--sand)}
+.tl i.w{background:var(--pine-mid)}
+/* misc */
+.cap-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--ink2);background:var(--sand);border-radius:20px;padding:6px 12px}
+.cap-pill b{color:var(--pine)}
+.topline{display:flex;align-items:center;justify-content:space-between}
+.back{width:34px;height:34px;border-radius:50%;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--ink2);cursor:pointer}
+.measure{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.measure input{font-family:var(--ui)}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:13px;font-weight:700;padding:11px 18px;border-radius:24px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1}
+.empty{text-align:center;padding:44px 20px;color:var(--mut)}
+.empty .e1{font-family:var(--disp);font-size:19px;font-weight:600;color:var(--ink2)}
+.empty .e2{font-size:12.5px;font-weight:600;margin-top:7px;line-height:1.5}
+.shield{width:60px;height:60px;border-radius:18px;background:var(--pine-soft);display:flex;align-items:center;justify-content:center;margin:26px auto 0}
+.tick{display:flex;gap:10px;align-items:flex-start;margin-top:14px}
+.tick .ic{width:22px;height:22px;border-radius:50%;background:var(--pine-soft);color:var(--pine);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:0 0 auto}
+.tick .tx{font-size:12.5px;line-height:1.5;color:var(--ink2);font-weight:600}
+.tick .tx b{color:var(--ink)}
+.brandchips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ONBOARD -->
+  <div class="view" id="v-onboard">
+    <div style="height:8dvh"></div>
+    <div style="text-align:center">
+      <img src="icons/icon-192.png" alt="" style="width:64px;height:64px;border-radius:16px">
+      <h1 class="big" style="margin-top:18px;font-size:30px">See everything<br>you own.</h1>
+      <p class="subtle" style="margin-top:10px">Buy less, wear more. Your closet, honestly.</p>
+    </div>
+    <label class="fl">What should we call you?</label>
+    <input type="text" id="ob-name" placeholder="Your name" maxlength="20">
+    <label class="fl">Your usual size</label>
+    <div class="sizes" id="ob-sizes"></div>
+    <button class="btn pine" style="margin-top:24px" onclick="finishOnboard()">Start my closet</button>
+    <p class="subtle" style="text-align:center;font-size:11px;margin-top:14px">Everything stays on this phone. Up to 20 pieces in this trial.</p>
+  </div>
+
+  <!-- CLOSET -->
+  <div class="view" id="v-closet">
+    <div class="topline">
+      <h1 class="big">hey, <span id="cl-name">there</span></h1>
+      <span class="cap-pill"><b id="cl-count">0</b>/20 pieces</span>
+    </div>
+    <div class="hero" id="cl-hero"></div>
+    <div class="mini" id="cl-mini"></div>
+    <div class="sec">Your pieces</div>
+    <div class="chips" id="cl-chips"></div>
+    <div class="grid" id="cl-grid"></div>
+    <div id="cl-empty" class="empty" style="display:none">
+      <div class="e1">Nothing here yet</div>
+      <div class="e2">Add your first piece — snap it, pick a photo,<br>or paste a store link.</div>
+      <button class="btn pine" style="max-width:220px;margin:18px auto 0" onclick="go('add')">Add a piece</button>
+    </div>
+  </div>
+
+  <!-- ADD -->
+  <div class="view" id="v-add">
+    <h1 class="big">Add a piece</h1>
+    <p class="subtle">Any way it came into your life — we'll sort the rest.</p>
+    <div id="add-cap-warn"></div>
+    <button class="path" onclick="pickImage(true)">
+      <span class="pic" style="background:var(--pine-soft)"><svg class="psvg" viewBox="0 0 24 24" stroke="#1F3B2E"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
+      <span><span class="tt">Snap it</span><br><span class="dd">Flatlay or on you — shoot fast, tag after</span></span>
+      <span class="go">›</span>
+    </button>
+    <button class="path" onclick="askGallery()">
+      <span class="pic" style="background:#EAF0F6"><svg class="psvg" viewBox="0 0 24 24" stroke="#5C7A9C"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M4 17l5-4 3 2.5 4-3.5 4 4"/></svg></span>
+      <span><span class="tt">Pick from photos</span><br><span class="dd">Choose from your gallery · stays on-device</span></span>
+      <span class="go">›</span>
+    </button>
+    <button class="path" onclick="startTagScan()">
+      <span class="pic" style="background:var(--brass-soft)"><svg class="psvg" viewBox="0 0 24 24" stroke="#A9843C"><path d="M8 5h8l3 4-7 10-7-10z"/><circle cx="12" cy="8" r="1.2"/></svg></span>
+      <span><span class="tt">Scan the tag</span><br><span class="dd">Brand, size &amp; price straight off the swing tag</span></span>
+      <span class="go">›</span>
+    </button>
+    <button class="path" onclick="startLink()">
+      <span class="pic" style="background:var(--sand)"><svg class="psvg" viewBox="0 0 24 24" stroke="#5C564B"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1.2 1.2"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1.2-1.2"/></svg></span>
+      <span><span class="tt">Paste a link</span><br><span class="dd">Myntra, Ajio &amp; more — details auto-filled*</span></span>
+      <span class="go">›</span>
+    </button>
+    <p class="subtle" style="font-size:10.5px;margin-top:16px">*In this trial, paste the link and fill the details yourself — auto-fill from the store page arrives in the next version.</p>
+    <input type="file" id="file-cam" accept="image/*" capture="environment" hidden>
+    <input type="file" id="file-gal" accept="image/*" hidden>
+  </div>
+
+  <!-- GALLERY CONSENT -->
+  <div class="view" id="v-consent">
+    <div class="shield"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F3B2E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+    <h1 class="big" style="text-align:center;margin-top:16px;font-size:22px">Your photos stay yours</h1>
+    <p class="subtle" style="text-align:center">Here's exactly how gallery access works:</p>
+    <div class="tick"><div class="ic">✓</div><div class="tx"><b>You pick the photos.</b> We only see what you select — never your whole gallery.</div></div>
+    <div class="tick"><div class="ic">✓</div><div class="tx"><b>Everything stays on your phone.</b> Photos are stored on this device only, nothing is uploaded.</div></div>
+    <div class="tick"><div class="ic">✓</div><div class="tx"><b>Faces are ignored.</b> We only care about the garment.</div></div>
+    <div class="tick"><div class="ic">✓</div><div class="tx"><b>Delete anytime.</b> Removing an item removes its photo.</div></div>
+    <button class="btn pri" style="margin-top:22px" onclick="acceptGallery()">Choose a photo</button>
+    <button class="mut-link" onclick="go('add')">Not now</button>
+  </div>
+
+  <!-- VERIFY -->
+  <div class="view" id="v-verify">
+    <div class="topline"><span class="back" onclick="go('add')">‹</span><span style="font-family:var(--disp);font-size:18px;font-weight:600">Check the details</span><span style="width:34px"></span></div>
+    <div class="vprev">
+      <div class="ph" id="vf-ph"></div>
+      <div>
+        <div class="ai-note" id="vf-ai">✦ Colour detected from your photo</div>
+        <p class="subtle" style="font-size:12px;margin-top:5px">Tap anything to change it. Nothing saves until you say so.</p>
+      </div>
+    </div>
+    <label class="fl">Name</label>
+    <input type="text" id="vf-name" placeholder="e.g. Rust cotton kurta">
+    <label class="fl">Category</label>
+    <select id="vf-cat"></select>
+    <label class="fl">Occasion</label>
+    <div class="occs" id="vf-occ"></div>
+    <label class="fl">Colour</label>
+    <input type="text" id="vf-color" placeholder="e.g. Rust">
+    <label class="fl">Size <span id="vf-size-src" style="color:var(--pine-mid);text-transform:none;letter-spacing:0"></span></label>
+    <div class="sizes" id="vf-sizes"></div>
+    <label class="fl">Brand</label>
+    <input type="text" id="vf-brand" placeholder="e.g. FabIndia">
+    <label class="fl">Price (₹)</label>
+    <input type="number" id="vf-price" placeholder="1299" inputmode="numeric">
+    <label class="fl">Bought in</label>
+    <input type="month" id="vf-month">
+    <div id="vf-link-row" style="display:none"><label class="fl">Product link</label><input type="url" id="vf-link" placeholder="https://www.myntra.com/…"></div>
+    <button class="btn pine" style="margin-top:20px" onclick="saveItem()">Save to closet</button>
+    <button class="mut-link" onclick="go('closet')">Discard</button>
+  </div>
+
+  <!-- DETAIL -->
+  <div class="view" id="v-detail">
+    <div class="topline"><span class="back" onclick="go('closet')">‹</span><span></span><span class="back" onclick="deleteItem()" title="Delete">🗑</span></div>
+    <div class="dimg"><span class="badge" id="dt-badge" style="display:none"></span><img id="dt-img" alt=""></div>
+    <div class="topline" style="margin-top:14px;align-items:baseline">
+      <h1 class="big" id="dt-name" style="font-size:21px"></h1>
+      <span class="chip" id="dt-size" style="cursor:default;padding:4px 11px;font-size:11px"></span>
+    </div>
+    <p class="subtle" id="dt-meta" style="margin-top:3px;font-size:12px"></p>
+    <div class="mini" id="dt-mini"></div>
+    <div class="sec">Last 12 weeks</div>
+    <div class="tl" id="dt-tl"></div>
+    <button class="btn pri" style="margin-top:20px" id="dt-wear" onclick="logWear()">Wore it today</button>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div class="view" id="v-insights">
+    <h1 class="big">The honest mirror</h1>
+    <div id="in-body"></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="view" id="v-profile">
+    <h1 class="big">You</h1>
+    <div class="sec">Profile</div>
+    <label class="fl">Name</label>
+    <input type="text" id="pf-name" maxlength="20">
+    <label class="fl">Usual size</label>
+    <div class="sizes" id="pf-sizes"></div>
+    <div class="sec">Your fit · optional</div>
+    <p class="subtle" style="font-size:11.5px;margin-bottom:10px">Private, stored on this phone only. Pick a body type — or add exact measurements below if you want sharper fit checks like "this brand's M runs small".</p>
+    <label class="fl" style="margin-top:0">Measurements for</label>
+    <div class="occs" id="pf-gender" style="margin-bottom:4px"></div>
+    <label class="fl">Body type — the quick way</label>
+    <div class="occs" id="pf-body"></div>
+    <label class="fl">Or exact measurements</label>
+    <div class="sizes" id="pf-units" style="max-width:200px"></div>
+    <div class="measure" id="pf-measure" style="margin-top:14px"></div>
+    <button class="btn pine" style="margin-top:18px" onclick="saveProfile()">Save profile</button>
+    <div class="sec">AI tagging</div>
+    <p class="subtle" style="font-size:11.5px;margin-bottom:10px">Paste the trial API key you were given and every photo gets read by Claude — garment type, category, occasion and colour, auto-filled for you to confirm. The key is stored only on this phone.</p>
+    <input type="password" id="pf-key" placeholder="sk-ant-…" autocomplete="off">
+    <p class="subtle" style="font-size:10.5px;margin-top:8px" id="pf-key-status"></p>
+    <div class="sec">Your data</div>
+    <div class="lrow" style="cursor:default"><div><div class="nm">Piece limit</div><div class="sm">Keeps the trial light for everyone</div></div><span class="rt" id="pf-cap"></span></div>
+    <button class="btn" onclick="exportBackup()">Download a backup</button>
+    <button class="btn" onclick="document.getElementById('file-restore').click()">Restore from backup</button>
+    <input type="file" id="file-restore" accept="application/json" hidden onchange="restoreBackup(this)">
+    <p class="subtle" style="font-size:11px;margin-top:10px">Backups include your profile, pieces, wear history and daily stats — restore on a new phone or after a reinstall and nothing is lost.</p>
+    <button class="mut-link" style="color:#B0483C" onclick="resetAll()">Erase everything on this device</button>
+  </div>
+
+</div>
+
+<!-- NAV -->
+<div id="nav">
+  <button data-v="closet" class="on"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke-width="1.6"><rect x="2" y="2" width="6" height="6" rx="1.5"/><rect x="10" y="2" width="6" height="6" rx="1.5"/><rect x="2" y="10" width="6" height="6" rx="1.5"/><rect x="10" y="10" width="6" height="6" rx="1.5"/></svg>Closet</button>
+  <button data-v="add"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke-width="1.6"><circle cx="9" cy="9" r="7"/><path d="M9 5v8M5 9h8"/></svg>Add</button>
+  <button data-v="insights"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke-width="1.8"><line x1="4" y1="15" x2="4" y2="10"/><line x1="9" y1="15" x2="9" y2="4"/><line x1="14" y1="15" x2="14" y2="12"/></svg>Insights</button>
+  <button data-v="profile"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke-width="1.6"><circle cx="9" cy="6" r="3"/><path d="M3.5 15.5c1-3.4 10-3.4 11 0"/></svg>You</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= constants ================= */
+const CAP = 20;
+const SIZES = ['XS','S','M','L','XL'];
+const CATS = ['Top','Bottom','Dress','Ethnic wear','Outerwear','Footwear','Accessory'];
+const OCCS = ['Casual','Office','Gym','Ethnic','Party','Lounge'];
+const ASLEEP_DAYS = 90;
+const NAMED_COLORS = [
+  ['Black',20,20,20],['White',245,245,242],['Grey',128,128,128],['Beige',203,183,142],
+  ['Brown',110,80,50],['Rust',183,90,54],['Red',180,40,45],['Pink',225,140,170],
+  ['Orange',230,140,60],['Yellow',230,200,80],['Olive',110,115,60],['Green',62,107,83],
+  ['Teal',55,130,130],['Blue',70,100,170],['Navy',35,45,90],['Lavender',178,168,216],
+  ['Purple',110,70,140],['Maroon',110,40,55],['Cream',240,230,210],['Gold',169,132,60]
+];
+
+/* ================= state ================= */
+let profile = null, items = [], view = 'closet', filter = 'All';
+let pending = null, current = null, galleryOK = false;
+
+/* ================= idb ================= */
+let db;
+function idb(){ return new Promise((res,rej)=>{
+  const r = indexedDB.open('wardrobe',2);
+  r.onupgradeneeded = e => {
+    const d = e.target.result;
+    if(!d.objectStoreNames.contains('items')) d.createObjectStore('items',{keyPath:'id'});
+    if(!d.objectStoreNames.contains('history')) d.createObjectStore('history',{keyPath:'date'});
+  };
+  r.onsuccess = e => { db = e.target.result; res(); };
+  r.onerror = rej;
+});}
+function idbAll(store='items'){ return new Promise(res=>{
+  const out=[]; const c = db.transaction(store).objectStore(store).openCursor();
+  c.onsuccess = e => { const cur=e.target.result; if(cur){out.push(cur.value);cur.continue();} else res(out); };
+});}
+function idbPut(it,store='items'){ return new Promise(res=>{ db.transaction(store,'readwrite').objectStore(store).put(it).onsuccess=res; }); }
+function idbDel(id,store='items'){ return new Promise(res=>{ db.transaction(store,'readwrite').objectStore(store).delete(id).onsuccess=res; }); }
+function idbClear(store='items'){ return new Promise(res=>{ db.transaction(store,'readwrite').objectStore(store).clear().onsuccess=res; }); }
+
+/* ================= history snapshots ================= */
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+async function snapshot(){
+  if(!items.length && !(await idbAll('history')).length) return;
+  const asleep = items.filter(isAsleep);
+  await idbPut({
+    date: todayKey(),
+    count: items.length,
+    value: items.reduce((s,i)=>s+(i.price||0),0),
+    asleep: asleep.length,
+    asleepVal: asleep.reduce((s,i)=>s+(i.price||0),0),
+    wears: items.reduce((s,i)=>s+i.wears.length,0)
+  },'history');
+}
+
+/* ================= helpers ================= */
+const $ = id => document.getElementById(id);
+const inr = n => '₹' + (n>=100000 ? (n/100000).toFixed(1).replace(/\.0$/,'')+'L' : n>=1000 ? (n/1000).toFixed(1).replace(/\.0$/,'')+'k' : Math.round(n));
+const days = ms => Math.floor((Date.now()-ms)/86400000);
+function toast(t){ const el=$('toast'); el.textContent=t; el.classList.add('on'); setTimeout(()=>el.classList.remove('on'),2200); }
+function lastWorn(it){ return it.wears.length ? Math.max(...it.wears) : null; }
+function isAsleep(it){ const lw=lastWorn(it); return !lw ? days(it.created)>ASLEEP_DAYS/3 : days(lw)>ASLEEP_DAYS; }
+function cpw(it){ return it.price && it.wears.length ? Math.round(it.price/it.wears.length) : null; }
+
+/* ================= routing ================= */
+function go(v){
+  view = v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('on'));
+  $('v-'+v).classList.add('on');
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  if(v==='closet') renderCloset();
+  if(v==='insights') renderInsights();
+  if(v==='profile') renderProfile();
+  if(v==='add') renderAdd();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+
+/* ================= onboarding ================= */
+let obSize = 'M';
+function renderSizeSel(elId, cur, cb){
+  $(elId).innerHTML = SIZES.map(s=>`<button class="sz${s===cur?' on':''}" data-s="${s}">${s}</button>`).join('');
+  $(elId).querySelectorAll('.sz').forEach(b=>b.onclick=()=>{ cb(b.dataset.s); renderSizeSel(elId, b.dataset.s, cb); });
+}
+function finishOnboard(){
+  const name = $('ob-name').value.trim();
+  if(!name){ toast('Add your name first'); return; }
+  profile = { name, size: obSize, gender:'Female', unit:'in', m:{} };
+  localStorage.setItem('wd_profile', JSON.stringify(profile));
+  $('nav').style.display='flex';
+  go('closet');
+}
+
+/* ================= closet ================= */
+function renderCloset(){
+  $('cl-name').textContent = profile.name;
+  $('cl-count').textContent = items.length;
+  const total = items.reduce((s,i)=>s+(i.price||0),0);
+  const asleep = items.filter(isAsleep);
+  const asleepVal = asleep.reduce((s,i)=>s+(i.price||0),0);
+  const wornItems = items.filter(i=>i.price && i.wears.length);
+  const avgCpw = wornItems.length ? Math.round(wornItems.reduce((s,i)=>s+cpw(i),0)/wornItems.length) : 0;
+  const pct = items.length ? Math.round(asleep.length/items.length*100) : 0;
+
+  $('cl-hero').innerHTML = items.length
+    ? `<div class="k">${pct}% <em>asleep</em></div><div class="l"><b>${asleep.length} of ${items.length} pieces</b> untouched for a while</div>`
+    : `<div class="k">Your closet,<br><em>honestly</em></div><div class="l">Add pieces to see what's really going on</div>`;
+  $('cl-mini').innerHTML = `
+    <div><div class="k">${total?inr(total):'—'}</div><div class="l">closet value</div></div>
+    <div><div class="k">${avgCpw?inr(avgCpw):'—'}</div><div class="l">avg / wear</div></div>
+    <div><div class="k">${items.length}</div><div class="l">pieces</div></div>`;
+
+  const occCounts = {};
+  items.forEach(i=>occCounts[i.occasion]=(occCounts[i.occasion]||0)+1);
+  const tabs = ['All', ...OCCS.filter(o=>occCounts[o])];
+  if(!tabs.includes(filter)) filter='All';
+  $('cl-chips').innerHTML = tabs.map(t=>`<button class="chip${t===filter?' on':''}" data-t="${t}">${t}${t!=='All'?` <span class="cd">${occCounts[t]}</span>`:''}</button>`).join('');
+  $('cl-chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{ filter=b.dataset.t; renderCloset(); });
+
+  const list = items.filter(i=>filter==='All'||i.occasion===filter).sort((a,b)=>b.created-a.created);
+  $('cl-grid').innerHTML = list.map(i=>`
+    <div class="tag" data-id="${i.id}">
+      ${isAsleep(i)?'<span class="badge">asleep</span>':''}
+      <div class="art"><img src="${i.img}" alt=""></div>
+      <div class="nm">${i.name}</div>
+      <div class="meta">${i.brand||i.occasion} · worn ${i.wears.length}×</div>
+    </div>`).join('');
+  $('cl-grid').querySelectorAll('.tag').forEach(el=>el.onclick=()=>openDetail(el.dataset.id));
+  $('cl-empty').style.display = items.length ? 'none':'block';
+  $('cl-grid').style.display = items.length ? 'grid':'none';
+}
+
+/* ================= add flow ================= */
+function renderAdd(){
+  const left = CAP - items.length;
+  $('add-cap-warn').innerHTML = left<=0
+    ? `<div class="hero" style="margin-top:14px"><div class="k" style="font-size:22px">Closet full for this trial</div><div class="l">You've added all ${CAP} pieces. Delete one to add another — and tell us you hit the wall, that's great feedback.</div></div>`
+    : left<=5 ? `<p class="subtle" style="color:var(--brass);font-weight:800;margin-top:8px">${left} piece${left===1?'':'s'} left in this trial</p>` : '';
+}
+let pendingSource = 'snap';
+function pickImage(cam){
+  if(items.length>=CAP){ toast('Trial limit reached — 20 pieces'); return; }
+  const inp = cam ? $('file-cam') : $('file-gal');
+  inp.value='';
+  inp.onchange = () => { if(inp.files[0]) processImage(inp.files[0]); };
+  inp.click();
+}
+function askGallery(){
+  if(items.length>=CAP){ toast('Trial limit reached — 20 pieces'); return; }
+  pendingSource='gallery';
+  if(galleryOK || localStorage.getItem('wd_gal')==='1'){ pickImage(false); } else go('consent');
+}
+function acceptGallery(){ galleryOK=true; localStorage.setItem('wd_gal','1'); go('add'); setTimeout(()=>pickImage(false),150); }
+function startTagScan(){
+  if(items.length>=CAP){ toast('Trial limit reached — 20 pieces'); return; }
+  pendingSource='tag'; pickImage(true);
+}
+function startLink(){
+  if(items.length>=CAP){ toast('Trial limit reached — 20 pieces'); return; }
+  pendingSource='link';
+  pending = { img:null, link:'', size:profile.size };
+  openVerify();
+}
+function processImage(file){
+  if(pendingSource!=='tag' && pendingSource!=='gallery') pendingSource = pendingSource==='link'?'link':'snap';
+  const img = new Image();
+  img.onload = async () => {
+    const max=700, sc=Math.min(1, max/Math.max(img.width,img.height));
+    const c=document.createElement('canvas'); c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+    const x=c.getContext('2d'); x.drawImage(img,0,0,c.width,c.height);
+    const color = detectColor(x,c.width,c.height);
+    pending = { img:c.toDataURL('image/jpeg',.82), color, size:profile.size };
+    URL.revokeObjectURL(img.src);
+    const key = localStorage.getItem('wd_key');
+    if(key){
+      toast('✦ Claude is reading your photo…');
+      pending.ai = await analyzeWithClaude(key, pending.img);
+      if(pending.ai===null) toast("Couldn't reach Claude — filled in what we could");
+    }
+    openVerify();
+  };
+  img.src = URL.createObjectURL(file);
+}
+async function analyzeWithClaude(key, dataUrl){
+  try{
+    const b64 = dataUrl.split(',')[1];
+    const prompt = pendingSource==='tag'
+      ? `This is a photo of a clothing swing tag / label. Read what you can and respond with ONLY a JSON object, no other text: {"name": short item name if visible, "brand": brand name if visible else "", "size": one of ["XS","S","M","L","XL"] if visible else "", "price": number in rupees if visible else 0}`
+      : `Identify the garment in this photo. Respond with ONLY a JSON object, no other text: {"name": a short natural item name like "Rust cotton kurta" (colour + fabric/style + garment), "category": exactly one of ${JSON.stringify(CATS)}, "occasion": exactly one of ${JSON.stringify(OCCS)} (best fit for where you'd wear it), "color": one or two word colour name}`;
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'x-api-key': key,
+        'anthropic-version':'2023-06-01',
+        'content-type':'application/json',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:300,
+        messages:[{ role:'user', content:[
+          { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:b64 } },
+          { type:'text', text:prompt }
+        ]}]
+      })
+    });
+    if(!res.ok) return null;
+    const data = await res.json();
+    const text = (data.content||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim();
+    const out = JSON.parse(text);
+    if(out.category && !CATS.includes(out.category)) out.category = CATS.find(c=>c.toLowerCase().includes(String(out.category).toLowerCase().split(' ')[0])) || null;
+    if(out.occasion && !OCCS.includes(out.occasion)) out.occasion = null;
+    if(out.size && !SIZES.includes(out.size)) out.size = '';
+    return out;
+  }catch(e){ return null; }
+}
+function detectColor(ctx,w,h){
+  // sample the centre region, ignore near-white bg pixels, average, snap to named colour
+  const d = ctx.getImageData(Math.round(w*.25),Math.round(h*.25),Math.round(w*.5),Math.round(h*.5)).data;
+  let r=0,g=0,b=0,n=0;
+  for(let i=0;i<d.length;i+=16){
+    const R=d[i],G=d[i+1],B=d[i+2];
+    if(R>235&&G>235&&B>235) continue;
+    r+=R; g+=G; b+=B; n++;
+  }
+  if(!n) return 'White';
+  r/=n; g/=n; b/=n;
+  let best='Grey', bd=1e9;
+  for(const [nm,cr,cg,cb] of NAMED_COLORS){
+    const dd=(r-cr)**2+(g-cg)**2+(b-cb)**2;
+    if(dd<bd){bd=dd;best=nm;}
+  }
+  return best;
+}
+
+/* ================= verify ================= */
+let vfSize='M', vfOcc='Casual';
+function openVerify(){
+  const ai = pending.ai || null;
+  vfSize = (ai&&ai.size) || pending.size || profile.size;
+  vfOcc = (ai&&ai.occasion) || 'Casual';
+  $('vf-ph').innerHTML = pending.img ? `<img src="${pending.img}">` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--mut);font-size:11px;font-weight:800">no photo</div>';
+  $('vf-ai').textContent = ai ? '✦ Read by Claude — check &amp; fix anything'.replace('&amp;','&')
+    : pending.color ? `✦ Colour detected: ${pending.color}`
+    : (pendingSource==='link'?'✦ Fill in from the product page':'✦ Add the details below');
+  $('vf-name').value = (ai&&ai.name) || '';
+  $('vf-brand').value = (ai&&ai.brand) || '';
+  $('vf-price').value = (ai&&ai.price) ? ai.price : '';
+  $('vf-color').value = (ai&&ai.color) || pending.color || '';
+  $('vf-cat').innerHTML = CATS.map(c=>`<option${ai&&ai.category===c?' selected':''}>${c}</option>`).join('');
+  const now=new Date(); $('vf-month').value = now.toISOString().slice(0,7);
+  $('vf-occ').innerHTML = OCCS.map(o=>`<button class="occ${o===vfOcc?' on':''}" data-o="${o}">${o}</button>`).join('');
+  $('vf-occ').querySelectorAll('.occ').forEach(b=>b.onclick=()=>{ vfOcc=b.dataset.o; $('vf-occ').querySelectorAll('.occ').forEach(x=>x.classList.toggle('on',x.dataset.o===vfOcc)); });
+  renderSizeSel('vf-sizes', vfSize, s=>vfSize=s);
+  $('vf-size-src').textContent = (ai&&ai.size)?'· read from tag':pendingSource==='tag'?'· from tag':pendingSource==='link'?'· check the page':'· your usual';
+  $('vf-link-row').style.display = pendingSource==='link'?'block':'none';
+  if(pendingSource==='link') $('vf-link').value='';
+  go('verify');
+}
+async function saveItem(){
+  if(items.length>=CAP){ toast('Trial limit reached'); return; }
+  const name = $('vf-name').value.trim() || `${$('vf-color').value.trim()||'New'} ${$('vf-cat').value.toLowerCase()}`;
+  const it = {
+    id: 'i'+Date.now(),
+    img: pending.img || placeholderImg($('vf-color').value.trim()),
+    name, category: $('vf-cat').value, occasion: vfOcc,
+    color: $('vf-color').value.trim(), size: vfSize,
+    brand: $('vf-brand').value.trim(),
+    price: parseInt($('vf-price').value)||0,
+    month: $('vf-month').value,
+    link: pendingSource==='link' ? $('vf-link').value.trim() : '',
+    source: pendingSource,
+    wears: [], created: Date.now()
+  };
+  await idbPut(it); items.push(it); pending=null;
+  snapshot();
+  toast('Saved to your closet');
+  go('closet');
+}
+function placeholderImg(colorName){
+  const found = NAMED_COLORS.find(c=>c[0].toLowerCase()===String(colorName||'').toLowerCase());
+  const [r,g,b] = found ? [found[1],found[2],found[3]] : [203,183,142];
+  const c=document.createElement('canvas'); c.width=c.height=400;
+  const x=c.getContext('2d');
+  const gr=x.createLinearGradient(0,0,400,400);
+  gr.addColorStop(0,`rgb(${Math.min(255,r+35)},${Math.min(255,g+35)},${Math.min(255,b+35)})`);
+  gr.addColorStop(1,`rgb(${r},${g},${b})`);
+  x.fillStyle=gr; x.fillRect(0,0,400,400);
+  return c.toDataURL('image/jpeg',.7);
+}
+
+/* ================= detail ================= */
+function openDetail(id){
+  current = items.find(i=>i.id===id);
+  const it = current;
+  $('dt-img').src = it.img;
+  const lw = lastWorn(it);
+  const asleep = isAsleep(it);
+  $('dt-badge').style.display = asleep?'inline-flex':'none';
+  if(asleep) $('dt-badge').textContent = lw ? `asleep · ${Math.floor(days(lw)/30)||1} mo` : 'never worn';
+  $('dt-name').textContent = it.name;
+  $('dt-size').textContent = it.size;
+  const when = it.month ? new Date(it.month+'-01').toLocaleDateString('en-IN',{month:'short',year:'2-digit'}) : '';
+  $('dt-meta').textContent = [it.brand, it.price?inr(it.price):null, when].filter(Boolean).join(' · ') || it.occasion;
+  const c = cpw(it);
+  $('dt-mini').innerHTML = `
+    <div><div class="k">${it.wears.length}×</div><div class="l">worn</div></div>
+    <div><div class="k">${lw?(days(lw)===0?'today':days(lw)<30?days(lw)+'d':Math.floor(days(lw)/30)+'mo'):'—'}</div><div class="l">last worn</div></div>
+    <div><div class="k"${c&&c>400?' style="color:var(--brass)"':''}>${c?inr(c):'—'}</div><div class="l">per wear</div></div>`;
+  const now = Date.now();
+  $('dt-tl').innerHTML = Array.from({length:12},(_,w)=>{
+    const start = now-(12-w)*7*86400000, end = start+7*86400000;
+    const worn = it.wears.some(t=>t>=start&&t<end);
+    return `<i${worn?' class="w"':''}></i>`;
+  }).join('');
+  const today = new Date().toDateString();
+  const wornToday = it.wears.some(t=>new Date(t).toDateString()===today);
+  $('dt-wear').textContent = wornToday ? 'Logged for today ✓' : 'Wore it today';
+  $('dt-wear').disabled = wornToday;
+  go('detail');
+}
+async function logWear(){
+  current.wears.push(Date.now());
+  await idbPut(current);
+  snapshot();
+  toast('Wear logged');
+  openDetail(current.id);
+}
+async function deleteItem(){
+  if(!confirm('Remove this piece and its photo?')) return;
+  await idbDel(current.id);
+  items = items.filter(i=>i.id!==current.id);
+  snapshot();
+  toast('Removed');
+  go('closet');
+}
+
+/* ================= insights ================= */
+async function renderInsights(){
+  if(!items.length){
+    $('in-body').innerHTML = `<div class="empty"><div class="e1">No mirror yet</div><div class="e2">Add pieces and log wears —<br>the honest numbers show up here.</div></div>`;
+    return;
+  }
+  const history = (await idbAll('history')).sort((a,b)=>a.date<b.date?-1:1);
+  const asleep = items.filter(isAsleep);
+  const asleepVal = asleep.reduce((s,i)=>s+(i.price||0),0);
+
+  // 14-day wear activity from wear timestamps (never lost — every wear is stored with its date)
+  const actDays = Array.from({length:14},(_,k)=>{
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-(13-k));
+    const start=d.getTime(), end=start+86400000;
+    return { label: d.toLocaleDateString('en-IN',{weekday:'narrow'}), n: items.reduce((s,i)=>s+i.wears.filter(t=>t>=start&&t<end).length,0) };
+  });
+  const maxA = Math.max(...actDays.map(a=>a.n),1);
+  const wears14 = actDays.reduce((s,a)=>s+a.n,0);
+
+  // week-over-week trend from snapshots
+  let trend='';
+  if(history.length>=2){
+    const latest = history[history.length-1];
+    const weekAgoKey = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+    const past = [...history].reverse().find(h=>h.date<=weekAgoKey) || history[0];
+    if(past.date!==latest.date){
+      const dA = latest.asleep - past.asleep, dC = latest.count - past.count, dW = latest.wears - past.wears;
+      trend = `<div class="sec">Since ${new Date(past.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+      <div class="qrow">
+        <div><div class="qk">${dC>=0?'+':''}${dC}</div><div class="ql">pieces</div></div>
+        <div><div class="qk">${dW>=0?'+':''}${dW}</div><div class="ql">wears</div></div>
+        <div><div class="qk" style="color:${dA<=0?'var(--pine-mid)':'var(--brass)'}">${dA>0?'+':''}${dA}</div><div class="ql">asleep</div></div>
+      </div>`;
+    }
+  }
+
+  // monthly spend, last 6 months
+  const months = [];
+  const d = new Date(); d.setDate(1);
+  for(let k=5;k>=0;k--){
+    const m = new Date(d.getFullYear(), d.getMonth()-k, 1);
+    const key = m.toISOString().slice(0,7);
+    months.push({ key, label: m.toLocaleDateString('en-IN',{month:'short'}), total: items.filter(i=>i.month===key).reduce((s,i)=>s+(i.price||0),0) });
+  }
+  const maxM = Math.max(...months.map(m=>m.total),1);
+
+  // quarterly, last 4 quarters
+  const qs = [];
+  const qNow = Math.floor(new Date().getMonth()/3);
+  for(let k=3;k>=0;k--){
+    let q = qNow-k, y = new Date().getFullYear();
+    while(q<0){q+=4;y--;}
+    const keys = [0,1,2].map(i=>`${y}-${String(q*3+i+1).padStart(2,'0')}`);
+    qs.push({ label:`Q${q+1} '${String(y).slice(2)}`, total: items.filter(i=>keys.includes(i.month)).reduce((s,i)=>s+(i.price||0),0) });
+  }
+
+  // most worn
+  const mostWorn = [...items].filter(i=>i.wears.length).sort((a,b)=>b.wears.length-a.wears.length).slice(0,3);
+  // brands
+  const brands = {};
+  items.forEach(i=>{ if(i.brand) brands[i.brand]=(brands[i.brand]||0)+1; });
+  const brandList = Object.entries(brands).sort((a,b)=>b[1]-a[1]);
+  // duplicates nudge
+  const dup = {};
+  items.forEach(i=>{ if(i.color){ const k=`${i.color} ${i.category.toLowerCase()}s`; dup[k]=(dup[k]||0)+1; }});
+  const topDup = Object.entries(dup).sort((a,b)=>b[1]-a[1])[0];
+
+  $('in-body').innerHTML = `
+    <div class="hero">
+      <div class="k">${asleepVal?inr(asleepVal):asleep.length}</div>
+      <div class="l">${asleepVal?`sitting in <b>${asleep.length} piece${asleep.length===1?'':'s'}</b> you haven't touched lately`:`piece${asleep.length===1?'':'s'} <b>asleep</b> in your closet`}</div>
+    </div>
+
+    ${trend}
+
+    <div class="sec">Wear activity · last 14 days${wears14?` · ${wears14} wear${wears14===1?'':'s'}`:''}</div>
+    <div class="bars" style="height:70px">${actDays.map(a=>`
+      <div class="bcol">
+        <div class="bar" style="height:${Math.max(4,Math.round(a.n/maxA*85))}%;${a.n?'':'background:var(--sand)'}"></div>
+        <div class="bl">${a.label}</div>
+      </div>`).join('')}
+    </div>
+
+    <div class="sec">Spend by month</div>
+    <div class="bars">${months.map(m=>`
+      <div class="bcol">
+        <div class="bv">${m.total?inr(m.total):''}</div>
+        <div class="bar" style="height:${Math.max(3,Math.round(m.total/maxM*70))}%"></div>
+        <div class="bl">${m.label}</div>
+      </div>`).join('')}
+    </div>
+
+    <div class="sec">By quarter</div>
+    <div class="qrow">${qs.map(q=>`<div><div class="qk">${q.total?inr(q.total):'—'}</div><div class="ql">${q.label}</div></div>`).join('')}</div>
+
+    <div class="sec">Most worn</div>
+    ${mostWorn.length ? mostWorn.map((i,ix)=>`
+      <div class="lrow" data-id="${i.id}">
+        <div class="th"><img src="${i.img}"></div>
+        <div><div class="nm">${i.name}</div><div class="sm">${i.wears.length} wears${cpw(i)?` · ${inr(cpw(i))}/wear`:''}</div></div>
+        <span class="rt">#${ix+1}</span>
+      </div>`).join('')
+    : `<p class="subtle" style="font-size:12px">Log wears from any item to see your true favourites.</p>`}
+
+    <div class="sec">Deep sleepers</div>
+    ${asleep.length ? asleep.slice(0,3).map(i=>`
+      <div class="lrow" data-id="${i.id}">
+        <div class="th"><img src="${i.img}"></div>
+        <div><div class="nm">${i.name}</div><div class="sm">${lastWorn(i)?`last worn ${Math.floor(days(lastWorn(i))/30)||1} mo ago`:'never worn'}</div></div>
+        <span class="rt" style="color:var(--brass)">Wake it ›</span>
+      </div>`).join('')
+    : `<p class="subtle" style="font-size:12px">Nothing asleep — your closet is working hard.</p>`}
+
+    <div class="sec">Brands you own</div>
+    ${brandList.length ? `<div class="brandchips">${brandList.map(([b,n])=>`<span class="chip" style="cursor:default">${b} <span class="cd">${n}</span></span>`).join('')}</div>`
+    : `<p class="subtle" style="font-size:12px">Add brands to your pieces to see this.</p>`}
+
+    ${topDup && topDup[1]>=3 ? `
+    <div class="sec">Before you buy</div>
+    <div style="background:var(--sand);border-radius:14px;padding:14px">
+      <div style="font-size:13px;font-weight:800">You own ${topDup[1]} ${topDup[0]}</div>
+      <div class="subtle" style="font-size:11.5px;margin-top:3px">Check your closet before checkout.</div>
+    </div>`:''}
+  `;
+  $('in-body').querySelectorAll('.lrow[data-id]').forEach(el=>el.onclick=()=>openDetail(el.dataset.id));
+}
+
+/* ================= profile ================= */
+const MEASURE_FIELDS = {
+  Female: [['bust','Bust'],['waist','Waist'],['hip','Hip'],['shoulder','Shoulder'],['inseam','Inseam'],['height','Height']],
+  Male:   [['chest','Chest'],['waist','Waist'],['hip','Hip'],['neck','Neck'],['shoulder','Shoulder'],['sleeve','Sleeve'],['inseam','Inseam'],['height','Height']]
+};
+const BODY_TYPES = {
+  Female: ['Lean','Athletic','Curvy','Healthy'],
+  Male:   ['Lean','Athletic','Dad bod','Healthy']
+};
+function renderProfile(){
+  $('pf-name').value = profile.name;
+  renderSizeSel('pf-sizes', profile.size, s=>profile.size=s);
+  const key = localStorage.getItem('wd_key')||'';
+  $('pf-key').value = key;
+  $('pf-key-status').textContent = key ? '✦ AI tagging is on — photos are sent to Claude for reading, then everything stays on this phone.' : 'No key yet — photos use on-device colour detection only.';
+  if(!profile.gender) profile.gender='Female';
+  if(!profile.unit) profile.unit='in';
+  if(!profile.m) profile.m={};
+  renderGenderSel();
+  renderBodySel();
+  renderUnitSel();
+  renderMeasureFields();
+  $('pf-cap').textContent = `${items.length} / ${CAP}`;
+}
+function renderBodySel(){
+  const opts = BODY_TYPES[profile.gender];
+  if(profile.body && !opts.includes(profile.body)) profile.body='';
+  $('pf-body').innerHTML = opts.map(t=>`<button class="occ${t===profile.body?' on':''}" data-t="${t}">${t}</button>`).join('');
+  $('pf-body').querySelectorAll('.occ').forEach(b=>b.onclick=()=>{
+    profile.body = profile.body===b.dataset.t ? '' : b.dataset.t; // tap again to clear
+    renderBodySel();
+  });
+}
+function renderGenderSel(){
+  $('pf-gender').innerHTML = ['Female','Male'].map(g=>`<button class="occ${g===profile.gender?' on':''}" data-g="${g}">${g}</button>`).join('');
+  $('pf-gender').querySelectorAll('.occ').forEach(b=>b.onclick=()=>{
+    captureMeasureInputs();
+    profile.gender=b.dataset.g;
+    renderGenderSel(); renderBodySel(); renderMeasureFields();
+  });
+}
+function renderUnitSel(){
+  $('pf-units').innerHTML = [['in','Inches'],['cm','cm']].map(([u,l])=>`<button class="sz${u===profile.unit?' on':''}" data-u="${u}">${l}</button>`).join('');
+  $('pf-units').querySelectorAll('.sz').forEach(b=>b.onclick=()=>{
+    captureMeasureInputs();
+    const from=profile.unit, to=b.dataset.u;
+    if(from!==to){
+      const f = to==='cm' ? v=>Math.round(v*2.54*10)/10 : v=>Math.round(v/2.54*10)/10;
+      for(const k in profile.m){ const v=parseFloat(profile.m[k]); if(!isNaN(v)&&v>0) profile.m[k]=f(v); }
+      profile.unit=to;
+    }
+    renderUnitSel(); renderMeasureFields();
+  });
+}
+function renderMeasureFields(){
+  const fields = MEASURE_FIELDS[profile.gender];
+  const u = profile.unit==='in'?'in':'cm';
+  $('pf-measure').innerHTML = fields.map(([k,l])=>`
+    <div><label class="fl" style="margin-top:0">${l} (${u})</label>
+    <input type="number" step="0.5" min="0" inputmode="decimal" data-m="${k}" value="${profile.m[k]??''}" placeholder="—"></div>`).join('');
+}
+function captureMeasureInputs(){
+  $('pf-measure').querySelectorAll('input[data-m]').forEach(inp=>{
+    const v = inp.value.trim();
+    if(v==='') delete profile.m[inp.dataset.m];
+    else profile.m[inp.dataset.m] = parseFloat(v);
+  });
+}
+function saveProfile(){
+  profile.name = $('pf-name').value.trim() || profile.name;
+  captureMeasureInputs();
+  const key = $('pf-key').value.trim();
+  if(key) localStorage.setItem('wd_key', key); else localStorage.removeItem('wd_key');
+  localStorage.setItem('wd_profile', JSON.stringify(profile));
+  toast('Profile saved');
+  renderProfile();
+}
+async function resetAll(){
+  if(!confirm('Erase your profile and all pieces from this phone? This cannot be undone.')) return;
+  await idbClear('items'); await idbClear('history');
+  localStorage.removeItem('wd_profile'); localStorage.removeItem('wd_gal');
+  location.reload();
+}
+async function exportBackup(){
+  const data = { v:1, exported:new Date().toISOString(), profile, items, history: await idbAll('history') };
+  const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `wardrobe-backup-${todayKey()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Backup downloaded');
+}
+async function restoreBackup(inp){
+  const f = inp.files[0]; if(!f) return;
+  try{
+    const data = JSON.parse(await f.text());
+    if(!data.items || !data.profile) throw 0;
+    if(!confirm(`Restore ${data.items.length} piece${data.items.length===1?'':'s'} and profile "${data.profile.name}"? This replaces what's on this phone.`)) return;
+    await idbClear('items'); await idbClear('history');
+    for(const it of data.items) await idbPut(it);
+    for(const h of (data.history||[])) await idbPut(h,'history');
+    profile = data.profile;
+    localStorage.setItem('wd_profile', JSON.stringify(profile));
+    items = data.items;
+    toast('Restored');
+    go('closet');
+  }catch(e){ toast("Couldn't read that backup file"); }
+  inp.value='';
+}
+
+/* ================= boot ================= */
+(async function(){
+  await idb();
+  items = await idbAll();
+  // ask the OS to protect our storage from eviction
+  if(navigator.storage && navigator.storage.persist) navigator.storage.persist();
+  const saved = localStorage.getItem('wd_profile');
+  if(saved){
+    profile = JSON.parse(saved);
+    // migrate old flat cm fields to the new model
+    if(!profile.m){
+      profile.m = {};
+      ['bust','waist','hip','height'].forEach(k=>{ if(profile[k]) profile.m[k]=parseFloat(profile[k]); delete profile[k]; });
+      profile.unit = Object.keys(profile.m).length ? 'cm' : 'in';
+      profile.gender = profile.gender || 'Female';
+      localStorage.setItem('wd_profile', JSON.stringify(profile));
+    }
+    go('closet');
+    snapshot();
+  } else {
+    $('nav').style.display='none';
+    renderSizeSel('ob-sizes','M',s=>obSize=s);
+    document.querySelectorAll('.view').forEach(el=>el.classList.remove('on'));
+    $('v-onboard').classList.add('on');
+  }
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+})();
+</script>
+</body>
+</html>
