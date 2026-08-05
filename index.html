@@ -299,7 +299,7 @@ label.fl{display:block;font-size:10px;color:var(--mut);font-weight:800;text-tran
     <button class="btn pine" style="margin-top:18px" onclick="saveProfile()">Save profile</button>
     <div class="sec">AI tagging</div>
     <p class="subtle" style="font-size:11.5px;margin-bottom:10px">Paste the trial API key you were given and every photo gets read by Claude — garment type, category, occasion and colour, auto-filled for you to confirm. The key is stored only on this phone.</p>
-    <input type="password" id="pf-key" placeholder="sk-ant-…" autocomplete="off">
+    <input type="password" id="pf-key" placeholder="sk-ant-…" autocomplete="off" oninput="saveKey(this.value)">
     <p class="subtle" style="font-size:10.5px;margin-top:8px" id="pf-key-status"></p>
     <div class="sec">Your data</div>
     <div class="lrow" style="cursor:default"><div><div class="nm">Piece limit</div><div class="sm">Keeps the trial light for everyone</div></div><span class="rt" id="pf-cap"></span></div>
@@ -909,11 +909,16 @@ function captureMeasureInputs(){
     else profile.m[inp.dataset.m] = parseFloat(v);
   });
 }
+function saveKey(v){
+  const key = v.trim();
+  if(key) localStorage.setItem('wd_key', key); else localStorage.removeItem('wd_key');
+  $('pf-key-status').textContent = key
+    ? (key.startsWith('sk-ant-') ? '✦ Key saved — AI tagging is on. Photos are sent to Claude for reading, then everything stays on this phone.' : '⚠ Saved, but this doesn\'t look like an sk-ant-… key — double-check it.')
+    : 'No key yet — photos use on-device colour detection only.';
+}
 function saveProfile(){
   profile.name = $('pf-name').value.trim() || profile.name;
   captureMeasureInputs();
-  const key = $('pf-key').value.trim();
-  if(key) localStorage.setItem('wd_key', key); else localStorage.removeItem('wd_key');
   localStorage.setItem('wd_profile', JSON.stringify(profile));
   toast('Profile saved');
   renderProfile();
